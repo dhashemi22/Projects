@@ -1,0 +1,47 @@
+---
+title: "Dextroamphetamine and Intelligence"
+author: "Samuel Aycock"
+date: "May 27, 2019"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(dplyr)
+library(ggplot2)
+
+data <- read.csv("DataEdited.csv")
+model1 <- aov(Score ~ factor(Dose) * factor(IQBlock) + Error(factor(NameID)), data = data)
+summary(model1)
+data1 <- data %>% filter(IQBlock == "SMALL")
+data2 <- data %>% filter(IQBlock == "MID")
+data3 <- data %>% filter(IQBlock == "HIGH")
+boxplot(Score ~ Dose, data = data1, xlab = "Dose", ylab = "Score", main = "Small IQ Block")
+boxplot(Score ~ Dose, data = data2, xlab = "Dose", ylab = "Score", main = "Mid IQ Block")
+boxplot(Score ~ Dose, data = data3, xlab = "Dose", ylab = "Score", main = "High IQ Block")
+
+attach(data)
+ggplot(data, aes(x = factor(Dose), y = Score, group = IQBlock)) + geom_point(aes(color = IQBlock)) + stat_summary(fun.y=median, colour="red", geom="line", aes(group = IQBlock)) + scale_fill_discrete(name="IQBlocks", breaks=c("HIGH", "MID", "SMALL"),labels=c("HIGH", "MID", "SMALL"))
+
+ggplot(data, aes(y = Score, x = Dose, group = NameID, color = IQBlock)) + geom_line()
+
+library(lme4)
+
+model2 <- lmer(Score ~ factor(Dose) + factor(IQBlock) + (1|NameID), data = data) #no interaction
+model3 <- lmer(Score ~ factor(Dose) * factor(IQBlock) + (1|NameID), data = data) #interaction
+model4 <- aov(Score ~ factor(Dose) * factor(IQBlock) + NameID:Dose)
+summary(model2)
+summary(model3)
+summary(model4)
+plot(model4)
+
+plot(model3)
+qqnorm(resid(model3))
+
+library(car)
+with(data, interaction.plot(Dose, NameID, Score))
+
+```
