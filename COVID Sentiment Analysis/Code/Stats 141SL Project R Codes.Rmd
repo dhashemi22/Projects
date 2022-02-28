@@ -1,0 +1,705 @@
+---
+title: "Stats 141SL Final Project R Codes (Combined)"
+author: 'Group 5 - 11:00 A.M.'
+date: "June 12, 2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Load the data
+```{r}
+pre_corona_stem_survey <- read.csv("pre_corona_stem_survey.csv", header=T)
+pre_pandemic_short_survey <- read.csv("pre-pandemic short survey.csv",header=T)
+post_corona_survey <- read.csv("post_corona_survey_data.csv", header=T)
+
+#View(pre_corona_stem_survey)
+#View(pre_pandemic_short_survey)
+#View(post_corona_survey)
+```
+
+# Change variable names more effectively
+```{r}
+# Change some variable name of post_corona_survey data
+library(dplyr)
+post_corona_survey<-post_corona_survey %>% 
+  rename(
+    International = Are.you.an.international.student.,
+    major = Your.major.,
+    living = Your.living.arrangement.during.this.pandemic,
+    interact.classmate = How.well.are.you.able.to.interact.with.your.classmates.about.school.work.through.zoom.after.this.pandemic.,  
+    interact.instructors = How.well.are.you.able.to.interact.with.your.instructors.through.zoom.after.this.pandemic.
+    )
+#attach
+attach(pre_corona_stem_survey)
+attach(pre_pandemic_short_survey)
+attach(post_corona_survey)
+```
+
+==================================================================================
+
+# Post_corona_survey_data
+
+
+# Hypothesis1 : International students tends not to interact with classmates and instructors about school work after corona.  
+
+Barplot for variable1 : International students or not, variable2 : how well interact with classmate about school work. 
+```{r}
+library(ggplot2)
+ggplot(data=post_corona_survey)+geom_bar(aes(x= interact.classmate, fill=as.factor(International)))+
+  ggtitle(label="interact with classmate by International or not")
+```
+
+result : No matter international or non-international, students do NOT interact with classmates as well as before.
+
+```{r}
+library(ggplot2)
+ggplot(data=post_corona_survey)+geom_bar(aes(x= interact.instructors, fill=as.factor(International)))+
+  ggtitle(label="interact with instructors by International or not")
+```
+
+result : No matter international or non-international, students do NOT interact with instructors as well as before.
+
+# Hypothesis 2 : Students who lives outside US will feel more secured and hence they are more likely to feel motivated. 
+```{r}
+library(ggplot2)
+ggplot(data=post_corona_survey)+geom_bar(aes(x=as.factor(living), fill=as.factor(How.motivated.are.you.about.learning.after.this.pandemic.)))+
+  ggtitle(label="How motivated vs living arrangement" )
+```
+
+result : No matter they live in US or outside US, they are less likely to be motivated than before and the ratios between more motivated and less motivated than before are almost the same.
+
+# Some interaction plots
+```{r}
+ggplot() +aes(x = major, color = International, group =International , y = How.motivated.are.you.about.learning.after.this.pandemic.) +stat_summary(fun.y = mean, geom = "point") +stat_summary(fun.y = mean, geom = "line")
+```
+
+results : 
+Among international students, STEM major is more motivated than non-STEM major students. 
+Among non-international students, STEM major is less motivated than non-STEM major students.
+
+```{r}
+ggplot() +aes(x = living, color = International, group =International , y = How.motivated.are.you.about.learning.after.this.pandemic.) +stat_summary(fun.y = mean, geom = "point") +stat_summary(fun.y = mean, geom = "line")
+```
+
+Among international students, living at home in california or outside US makes them more motivated than living in dorms. 
+Among non-international students, living at home in california did not really make them more motivated than living in dorms.
+
+
+```{r}
+ggplot() +aes(x = as.factor(Does.your.living.arrangement.during.this.pandemic.make.it.difficult.for.you.to.take.the.most.out.of.online.instruction.), color = living, group = living , y = How.motivated.are.you.about.learning.after.this.pandemic.) +stat_summary(fun.y = mean, geom = "point") +stat_summary(fun.y = mean, geom = "line")
+```
+
+result : students who live outside US and think it made it difficult to make the most out of online instruction, probably due to the different time zone, feel less motivated.  The students who live at home in california and in US but outside CA follows the similar result as the ones who live outside US.  
+
+# May or may not be used. 
+```{r}
+library(ggplot2)
+ggplot(data=post_corona_survey)+geom_bar(aes(x= as.factor(living), fill=as.factor(Does.your.living.arrangement.during.this.pandemic.make.it.difficult.for.you.to.take.the.most.out.of.online.instruction.)))+
+  ggtitle(label="interact with instructors by International or not")
+```
+
+result : students who said "Yes" for the question whether living arrangement make it difficult to take the most out of online instruction, is showed most to least as followed; Outside US, at home in california, in US but outside CA, in my apartment, in dorms. 
+
+```{r}
+ggplot() +aes(x = as.factor(Does.your.living.arrangement.during.this.pandemic.make.it.difficult.for.you.to.take.the.most.out.of.online.instruction.), color = living, group = living , y = interact.classmate) +stat_summary(fun.y = mean, geom = "point") +stat_summary(fun.y = mean, geom = "line")
+```
+
+result : Except the ones who live outside US, the students who lives in other four categories of living arrangements showed the similar graph showing that the ones who think their living arrangement make it difficult for them to take the most out of online instruction are the ones who does not interact with their classmate about school work through zoom after this pandemic, while the ones who think their living arrangement does not matter are the ones who interact with their classmate in zoom as well as before.
+
+==================================================================================
+
+# Pre-pandemic_short_survey
+
+
+# Hypothesis1 : International students are less likely to socioeconomically struggle.
+
+Barplot for variable1 : International students or not, variable2 : SES(Indicator for socioeconomic struggle)
+```{r}
+library(ggplot2)
+ggplot(data=pre_pandemic_short_survey)+geom_bar(aes(x= pre_pandemic_short_survey$International, fill=SES))+
+  ggtitle(label="SES vs International")
+```
+
+result : Yes.
+International students are less likely to socioeconomically struggle.
+
+# Hypothesis 2 : students who socioeconomically struggle are more likely to have less sense of belonging.
+```{r}
+library(ggplot2)
+ggplot(data=pre_pandemic_short_survey)+geom_bar(aes(x= SES, fill=Belonging))+
+  ggtitle(label="SES vs Belonging")
+```
+
+result : Yes
+students who socioeconomically struggle are more likely to have less sense of belonging.
+
+# Hypothesis 3 : then, International students are more likely to have more sense of belonging? 
+```{r}
+library(ggplot2)
+ggplot(data=pre_pandemic_short_survey)+geom_bar(aes(x= pre_pandemic_short_survey$International, fill=Belonging))+
+  ggtitle(label="International vs Belonging")
+```
+result : No
+International students are likely to have less sense of belonging than non-international students.
+
+# Some interaction plots
+1. 
+```{r}
+ggplot() +aes(x = STEM, color = pre_pandemic_short_survey$International, group = pre_pandemic_short_survey$International , y = Belonging) +stat_summary(fun.y = mean, geom = "point") +stat_summary(fun.y = mean, geom = "line")
+```
+
+results : 
+Among international students, sense of belonging of STEM major students is far less than non-STEM major students. 
+Among non-international students, sense of belonging of STEM major students is less than non-STEM major students, but not as significant as international students.
+
+2.
+```{r}
+ggplot() +aes(x = STEM, color = pre_pandemic_short_survey$International, group = pre_pandemic_short_survey$International , y = Stress) +stat_summary(fun.y = mean, geom = "point") +stat_summary(fun.y = mean, geom = "line")
+```
+
+results : 
+For both international and non-international students, stress of STEM major students is more than non-STEM major students. 
+
+3.
+```{r}
+ggplot() +aes(x = Gender, color = Ethnic, group = Ethnic , y = Stress) +stat_summary(fun.y = mean, geom = "point") +stat_summary(fun.y = mean, geom = "line")
+```
+
+result : 
+Among Asian, Female gets more stressed than male,
+Among caucasian, trend is the same but with less stress level,
+While Hispanic and others has comparably less difference in stress level by gender.
+
+
+```{r}
+ggplot() +aes(x = STEM, color = Transfer, group = Transfer , y = Stress) +stat_summary(fun.y = mean, geom = "point") +stat_summary(fun.y = mean, geom = "line")
+```
+
+result : 
+Among transfer students, STEM major students gets less stressed than non-STEM major students,
+Among non-transfer students, STEM major students gets more stressed than non-STEM major students,
+
+5. 
+```{r}
+# Convert GPA into categorical variable to fit to an interation plot
+GPA_alphabet <- cut(GPA, c(0,2.0,3.0,3.5,4.0), labels=c("D","C","B","A"))
+
+ggplot() +aes(x = Orientation, color = GPA_alphabet, group = GPA_alphabet , y = Exclusion) +stat_summary(fun.y = mean, geom = "point") +stat_summary(fun.y = mean, geom = "line")
+```
+
+result :
+We see that higher the GPA, generally lower feeling of exclusion.
+Among A students, Bisexual students feel little more exclusion than Heterosexual or homosexual students. 
+Among B & C students, homosexual students feel far more exclusion than Bisexual and Heterosexual students. 
+
+
+```{r}
+# Q3.15 : I have a general idea about what I want to do after graduation.
+# Q3.5 : I need to work to pay for my expenses.
+# Convert Q3.5 to categorical variable 
+Q3.5_new<-cut(Q3.5, c(0,3.5,5.1), labels=c("No_need_to_pay","Have_to_pay"))
+ggplot() +aes(x =Q3.15 , color = Q3.5_new, group = Q3.5_new , y = Belonging) +stat_summary(fun.y = mean, geom = "point") +stat_summary(fun.y = mean, geom = "line")
+```
+result :
+Overall, students who doesn't need to work to pay has higher level of sense of belonging. 
+Among the students who need to work to pay, students who has a general idea about what they want to do after graduation has the lowest level of sense of belonging and who does not have a general idea has the highest level of sense of belonging.
+
+
+
+
+==================================================================================
+
+# Pre_corona_stem_survey  
+
+
+# Hypothesis: Is there any relationship between GPA and whether an international student or not
+```{r}
+t.test(pre_corona_stem_survey$What.is.your.UCLA.GPA ~ pre_corona_stem_survey$Are.you.an.International.student)
+```
+# No relationship between GPA and whether an international student or not
+
+# Hypothesis: Is there any relationship between GPA and whether an transfer student or not
+```{r}
+t.test(pre_corona_stem_survey$What.is.your.UCLA.GPA ~ pre_corona_stem_survey$Are.you.transfer.from.community.college..)
+boxplot(pre_corona_stem_survey$What.is.your.UCLA.GPA ~ pre_corona_stem_survey$Are.you.transfer.from.community.college..)
+```
+# It has significant relationship between GPA and whether an international student or not
+# Average GPA of non-transfer students is higher than transfer student.
+
+# Hypothesis: Relationship between Father's education level and student's GPA
+```{r}
+library(ggplot2)
+ggplot(data=pre_corona_stem_survey) + aes(x= Father.s.level.of.education, color= Father.s.level.of.education, group= Father.s.level.of.education, y= What.is.your.UCLA.GPA) + ggtitle(label="Father's education level and student's GPA") + geom_boxplot()
+```
+# The higher the father's level of education, the higher the GPA of the student.
+
+# Hypothesis: Relationship between Mother's education level and student's GPA
+```{r}
+ggplot(data=pre_corona_stem_survey) + aes(x= Mother.s.level.of.education, color= Mother.s.level.of.education, group= Mother.s.level.of.education, y= What.is.your.UCLA.GPA) + ggtitle(label="Mother's education level and student's GPA") + geom_boxplot()
+```
+# The higher the Mother's level of education, the higher the GPA of the student.
+
+# Regression
+### Pre Pandemic
+```{r}
+pre_pan <- read.csv("pre-pandemic short survey.csv")
+
+stress_resp <- lm(stress ~ factor(Sleep) + SameEthnic + factor(Office_hours) + factor(Missing_classes) + factor(Homework) + factor(Ethnic) + SES + Academic + Exclusion, data = pre_pan)
+
+belonging_resp <- lm(Belonging ~ stress + factor(Sleep) + SameEthnic + factor(Office_hours) + factor(Missing_classes) + factor(Homework) + factor(Ethnic) + SES + Academic + Exclusion, data = pre_pan)
+
+summary(stress_resp)
+summary(belonging_resp)
+```
+
+
+
+# Importance Plot
+
+```{r}
+library(data.table)
+library(mltools)
+pre_pan$Ethnic<-as.factor(pre_pan$Ethnic)
+categorical_features <- c('Ethnic','Orientation','Year')
+numeric_features <- c ('stress','academic','GPA', 'HighGPA', 'SameEthnic', 'OtherEthnic', 'Sleep','Missing_classes','Homework','Exercise','Office_hours')
+
+categorical_data <- one_hot(as.data.table(pre_pan[,categorical_features]))
+numeric_data<- as.data.table(pre_pan[,numeric_features])
+data <- cbind(numeric_data, categorical_data)
+
+y = pre_pan$stress
+set.seed(1) 
+sample <- sample.int(n = nrow(data), size = floor(.8*nrow(data)), replace = F)
+X_train <- data[sample, ]
+X_test  <- data[-sample, ]
+y_train <- y[sample]
+y_test <- y[-sample]
+train <- cbind(X_train, y_train)
+test <- cbind(X_test, y_test)
+
+y2 = pre_pan$Belonging
+sample2 <- sample.int(n = nrow(data), size = floor(.8*nrow(data)), replace = F)
+X_train2 <- data[sample2, ]
+X_test2  <- data[-sample2, ]
+y_train2 <- y2[sample2]
+y_test2 <- y2[-sample2]
+train2 <- cbind(X_train2, y_train2)
+test2 <- cbind(X_test2, y_test2)
+
+names(test)[19] <- "Year_Fifth_Year"
+names(train)[19] <- "Year_Fifth_Year"
+names(train)[21] <- "Year_Graduate_Student"
+names(test)[21] <- "Year_Graduate_Student"
+names(train)[14] <- "Ethnic_Latino_Hispanic"
+names(test)[14] <- "Ethnic_Latino_Hispanic"
+
+names(test2)[19] <- "Year_Fifth_Year"
+names(train2)[19] <- "Year_Fifth_Year"
+names(train2)[21] <- "Year_Graduate_Student"
+names(test2)[21] <- "Year_Graduate_Student"
+names(train2)[14] <- "Ethnic_Latino_Hispanic"
+names(test2)[14] <- "Ethnic_Latino_Hispanic"
+
+```
+
+
+#Variable Importance Plots
+```{r}
+library(randomForest)
+random_forest <- randomForest(y_train ~., data=train, mtry=20, ntree=200, keep.forest=FALSE, importance=TRUE, na.action = na.exclude)
+importance_df <- importance(random_forest,type=1)
+importance(random_forest, type=1)
+varImpPlot(random_forest)
+
+random_forest2 <- randomForest(y_train2 ~., data=train2, mtry=20, ntree=200, keep.forest=FALSE, importance=TRUE, na.action = na.exclude)
+importance_df2 <- importance(random_forest2,type=1)
+importance(random_forest2, type=1)
+varImpPlot(random_forest2)
+
+
+GPA1 <- importance_df["GPA", 1]
+HighGPA1 <- importance_df["HighGPA", 1]
+SameEthnic1 <- importance_df["SameEthnic", 1]
+OtherEthnic1<- importance_df["OtherEthnic", 1]
+Q2.1.1 <- importance_df["Sleep", 1]
+Q2.2.1<- importance_df["Missing_classes", 1]
+Q2.3.1 <- importance_df["Homework", 1]
+Q2.4.1 <- importance_df["Exercise", 1]
+Q2.5.1 <- importance_df["Office_hours", 1]
+Ethnic1 <- mean(importance_df[12:15,1])
+Orientation1 <- mean(importance_df[16:18,1])
+Year1 <- mean(importance_df[19:24,1])
+
+GPA2 <- importance_df2["GPA", 1]
+HighGPA2 <- importance_df2["HighGPA", 1]
+SameEthnic2 <- importance_df2["SameEthnic", 1]
+OtherEthnic2<- importance_df2["OtherEthnic", 1]
+Q2.1.2 <- importance_df2["Sleep", 1]
+Q2.2.2<- importance_df2["Missing_classes", 1]
+Q2.3.2 <- importance_df2["Homework", 1]
+Q2.4.2 <- importance_df2["Exercise", 1]
+Q2.5.2 <- importance_df2["Office_hours", 1]
+Ethnic2 <- mean(importance_df2[12:15,1])
+Orientation2 <- mean(importance_df2[16:18,1])
+Year2 <- mean(importance_df2[19:24,1])
+
+
+a <- c('Sleep', 'SameEthnic', 'Office_hours', 'Missing_classes', 'Homework','Ethnic','GPA','Exercise','Orientation','OtherEthnic','HighGPA', 'Year')
+b <- c(GPA1, HighGPA1, SameEthnic1, OtherEthnic1, Q2.1.1,Q2.2.1,Q2.3.1,Q2.4.1,Q2.5.1,Ethnic1,Orientation1, Year1)
+B <- -sort(-b) # Sort in descending order
+
+c <- c('Academic', 'stress', 'GPA', 'SameEthnic', 'OtherEthnic','HighGPA','Sleep','Missing_classes','Exercise','Office_Hours','Year', 'Ethnic')
+d <- c(GPA2, HighGPA2, SameEthnic2, OtherEthnic2, Q2.1.2,Q2.2.2,Q2.3.2,Q2.4.2,Q2.5.2,Ethnic2,Orientation2, Year2)
+D <- -sort(-d) # Sort in descending order
+```
+
+```{r}
+library(ggplot2)
+ggplot(data.frame(a,B),aes(x=reorder(a,-B),y=B))+geom_bar(stat = "identity",fill='indianred1')+theme_classic()+theme(axis.text.y = element_text(size=15,face = "bold"),axis.text.x =element_text(angle=45,size=15,face="bold",vjust=0.6),axis.title.x=element_blank(),axis.title.y=element_blank())+labs(title= "Variable Importance Of Stress")+theme(plot.title = element_text(hjust=0.5,size=18,face="bold"),legend.title=element_blank())
+
+ggplot(data.frame(c,D),aes(x=reorder(c,-D),y=D))+geom_bar(stat = "identity",fill='lightblue')+theme_classic()+theme(axis.text.y = element_text(size=15,face = "bold"),axis.text.x =element_text(angle=45,size=15,face="bold",vjust=0.6),axis.title.x=element_blank(),axis.title.y=element_blank())+labs(title= "Variable Importance of Belonging")+theme(plot.title = element_text(hjust=0.5,size=18,face="bold"),legend.title=element_blank())
+```
+
+
+
+# Text Mining _ pre-processing
+```{r}
+post_corona_survey <- read.csv("C:/Users/JUNGHWAN PARK/Documents/post_corona_survey_data.csv", header=T)
+post_corona1 <- post_corona_survey[,9:14]
+colnames(post_corona1)<- c("v1","v2","v3","v4","v5","v6")
+attach(post_corona1)
+post_corona2 <- paste(v1,v2,v3,v4,v5,v6)
+#View(post_corona2)
+#names(post_corona2)[1] <- c("text") 
+#write.csv(post_corona2, file = "sample2.csv", row.names = F)
+library(readxl)
+post_merged <- read_excel("C:/Users/JUNGHWAN PARK/Documents/post_merged.xlsx")
+#View(post_merged)
+```
+
+# Post-corona : open-ended questions -> total
+```{r}
+# install.packages("tidytext")
+library(tidytext)
+library(dplyr)
+# review5 : 5 stars
+total <- post_merged %>%
+  unnest_tokens(word, text)
+
+total  %>%
+  count(word, sort = TRUE) 
+```
+
+# Word Count
+```{r}
+#install.packages("ggplot2")
+library(ggplot2)
+total %>%
+  count(word, sort = TRUE) %>%
+  filter(n > 200) %>%
+  mutate(word = reorder(word, n)) %>%
+  ggplot(aes(word, n)) +
+  geom_col() +
+  xlab(NULL) +
+  coord_flip()
+```
+
+
+
+
+# Sentimental Analysis for post_corona
+# Joy
+```{r}
+library(janeaustenr)
+library(stringr)
+#install.packages("textdata")
+
+nrc_joy <- get_sentiments("nrc") %>% 
+  filter(sentiment == "joy")
+
+total %>%
+  inner_join(nrc_joy) %>%
+  count(word, sort = TRUE) %>%
+  filter(n > 5) %>%
+  mutate(word = reorder(word, n)) %>%
+  ggplot(aes(word, n)) +
+  geom_col() +
+  xlab(NULL) +
+  coord_flip()
+```
+
+# anger
+```{r}
+nrc_anger <- get_sentiments("nrc") %>% 
+  filter(sentiment == "anger" )
+
+total %>%
+  inner_join(nrc_anger) %>%
+  count(word, sort = TRUE) %>%
+  filter(n > 5) %>%
+  mutate(word = reorder(word, n)) %>%
+  ggplot(aes(word, n)) +
+  geom_col() +
+  xlab(NULL) +
+  coord_flip()
+```
+
+# Positive
+```{r}
+nrc_positive <- get_sentiments("nrc") %>% 
+  filter(sentiment == "positive" )
+
+total %>%
+  inner_join(nrc_positive) %>%
+  count(word, sort = TRUE) %>%
+  filter(n > 20) %>%
+  mutate(word = reorder(word, n)) %>%
+  ggplot(aes(word, n)) +
+  geom_col() +
+  xlab(NULL) +
+  coord_flip()
+```
+
+# Negative
+```{r}
+nrc_negative <- get_sentiments("nrc") %>% 
+  filter(sentiment == "negative" )
+
+total %>%
+  inner_join(nrc_negative) %>%
+  count(word, sort = TRUE) %>%
+  filter(n > 10) %>%
+  mutate(word = reorder(word, n)) %>%
+  ggplot(aes(word, n)) +
+  geom_col() +
+  xlab(NULL) +
+  coord_flip()
+```
+
+# Word Cloud 
+```{r}
+#install.packages("wordcloud")
+library(wordcloud)
+
+total %>%
+  anti_join(stop_words) %>%
+  count(word) %>%
+  with(wordcloud(word, n, max.words = 100))
+```
+
+# Positive WordCloud
+```{r}
+nrc_positive <- get_sentiments("nrc") %>% 
+  filter(sentiment == "positive" ) 
+total %>%
+  inner_join(nrc_positive) %>%
+  count(word, sort = TRUE) %>%
+  with(wordcloud(word, n, max.words = 61))
+```
+
+# Negative WordCloud
+```{r}
+nrc_negative <- get_sentiments("nrc") %>% 
+  filter(sentiment == "negative" ) 
+total %>%
+  inner_join(nrc_negative) %>%
+  count(word, sort = TRUE) %>%
+  with(wordcloud(word, n, max.words = 61))
+```
+
+
+### Creating Count Per Line for Word Type
+```{r}
+library(reshape2)
+sent_counts <- read.csv("sentiment_counts.csv")
+sent_cnt_pre <- read.csv("sentiment_counts_pre_corona.csv")
+
+pre_sent_counts <- data.frame(Joy = sum(sent_cnt_pre$Joy_Count) / nrow(sent_cnt_pre), Anger = sum(sent_cnt_pre$Anger_Count) / nrow(sent_cnt_pre), Positive = sum(sent_cnt_pre$Pos_Count) / nrow(sent_cnt_pre), Negative = sum(sent_cnt_pre$Neg_Count) / nrow(sent_cnt_pre))
+
+rownames(pre_sent_counts) <- "Pre Virus Word Count/Line"
+pre_sent_counts
+x <- melt(pre_sent_counts)
+
+post_sent_counts <- data.frame(Joy = sum(sent_counts$Joy_Count) / nrow(sent_counts), Anger = sum(sent_counts$Anger_Count) / nrow(sent_counts), Positive = sum(sent_counts$Pos_Count) / nrow(sent_counts), Negative = sum(sent_counts$Neg_Count) / nrow(sent_counts))
+
+rownames(post_sent_counts) <- "Post Virus Word Count/Line"
+post_sent_counts
+xx <- melt(post_sent_counts)
+
+
+
+xx$time <- "post"
+x$time <- "pre"
+fin <- rbind(x,xx)
+
+rbind(pre_sent_counts, post_sent_counts)
+```
+
+
+### Plotting Count by Line for Word Types
+```{r}
+library(ggplot2)
+
+w <- sent_cnt_pre[,10:13]
+v <- sent_counts[,11:14]
+
+w <- melt(w)
+v <- melt(v)
+
+w$time <- "pre"
+v$time <- "post"
+ff <- rbind(v, w)
+
+ggplot(ff, aes(x=variable, y=value, fill=time)) + geom_boxplot()
+```
+
+
+
+
+# install.packages("quanteda")
+# install.packages("caret")
+```{r}
+library(quanteda)
+library(RColorBrewer)
+library(ggplot2)
+library(caret)
+library(stopwords)
+
+# install.packages("gutenbergr")
+# install.packages("tidytext")
+
+library(tidytext)
+library(tidyr)
+library(gutenbergr)
+library(janeaustenr)
+library(dplyr)
+library(textdata)
+```
+
+# getting text from DevelopD12 as a data frame
+# Word Network Plots
+```{r}
+x = read.csv('./Data/post_corona_survey_data.csv')
+
+
+text_help <- data.frame(text = as.character(x$Q6_clean),  stringsAsFactors = FALSE)
+help.corpus <-corpus(text_help)
+
+low.plot_help <- dfm(help.corpus, tolower = TRUE, remove_punct = TRUE, remove_twitter = TRUE, remove_numbers = TRUE, remove=c("a", stopwords(source = "smart")))
+
+
+# low for help
+set.seed(125)
+low_fcm_help <- fcm(low.plot_help)
+feat1 <- names(topfeatures(low_fcm_help, 30))
+low_fcm_help <- fcm_select(low_fcm_help, feat1)
+
+size <- log(colSums(dfm_select(low_fcm_help, feat1)))
+textplot_network(low_fcm_help, min_freq = 0.80, vertex_size = size / min(size) * 3 , vertex_labelsize = size / min(size) * 3.5)
+```
+
+
+# Corr plot
+```{r}
+library(corrplot)
+M <-cor(stem[,c('stress','academic','GPA', 'HighGPA', 'SameEthnic', 'OtherEthnic')])
+
+corrplot(M, type="upper", col=brewer.pal(n=8, name="RdYlBu"),tl.col="black", tl.srt=45)
+```
+
+# Word Counts 
+
+# Sentiments
+```{r}
+nrc_joy <- get_sentiments("nrc") %>% filter(sentiment == "joy")
+nrc_anger <- get_sentiments("nrc") %>% filter(sentiment == "anger")
+nrc_positive <- get_sentiments("nrc") %>% filter(sentiment == "positive")
+nrc_negative <- get_sentiments("nrc") %>% filter(sentiment == "negative")
+
+
+words_only = tibble("Q1" = as.character(x$Q1_clean),
+                        "Q2" = as.character(x$Q2_clean),
+                        "Q3" = as.character(x$Q3_clean),
+                        "Q4" = as.character(x$Q4_clean),
+                        "Q5" = as.character(x$Q5_clean),
+                        "Q6" = as.character(x$Q6_clean))
+
+sentiment_counts = tibble("ID" = 1:nrow(x),
+                          "Major" = x$Your.major.,
+                          "International" = x$Are.you.an.international.student.,
+                          "Living_Arrange" = x$Your.living.arrangement.during.this.pandemic,
+                          "Instruct_Difficulty" = x$Does.your.living.arrangement.during.this.pandemic.make.it.difficult.for.you.to.take.the.most.out.of.online.instruction.,
+                          "Motivation" = x$How.motivated.are.you.about.learning.after.this.pandemic.,
+                          "Interaction_Students" = x$How.well.are.you.able.to.interact.with.your.classmates.about.school.work.through.zoom.after.this.pandemic.,
+                          "Interaction_Instructor" = x$How.well.are.you.able.to.interact.with.your.instructors.through.zoom.after.this.pandemic.,
+                          "Sentiment_Score" = x$Sentiment.Score,
+                          "Joy_Count" = 0,
+                          "Anger_Count" = 0,
+                          "Pos_Count" = 0,
+                          "Neg_Count" = 0)
+
+for(i in 1:nrow(sentiment_counts)){
+
+  total_row <- words_only[i,] %>% 
+    gather("question", "text", Q1, Q2, Q3, Q4, Q5, Q6 ) %>% 
+    unnest_tokens(word, text)
+  
+  
+  sentiment_counts[i, 10] = total_row %>% inner_join(nrc_joy) %>% count() %>% pull()
+  sentiment_counts[i, 11] = total_row %>% inner_join(nrc_anger) %>% count() %>% pull()
+  sentiment_counts[i, 12] = total_row %>% inner_join(nrc_positive) %>% count() %>% pull()
+  sentiment_counts[i, 13] = total_row %>% inner_join(nrc_negative) %>% count() %>% pull()
+  
+  
+}
+  
+sentiment_counts
+```
+
+### Model Building
+```{r}
+library(dplyr)
+library(glmnet)
+pn_col <- read.csv("Stats 141 Pos_Neg Column - Sheet1.csv")
+
+sent_counts$Sentiment_Score <- pn_col[,2]
+sent_counts$Sentiment_Score[is.na(sent_counts$Sentiment_Score)] <- 0
+sent_cnt_pre$Sentiment_Score <- ifelse(sent_cnt_pre$Pos_Count > sent_cnt_pre$Neg_Count, 1, 0)
+
+ww <- sent_cnt_pre[,9:13]
+vv <- sent_counts[,10:14]
+
+pre <- ww %>% mutate(tot_words = Joy_Count + Anger_Count + Pos_Count + Neg_Count)
+pre$time <- "pre"
+
+post <- vv %>% mutate(tot_words = Joy_Count + Anger_Count + Pos_Count + Neg_Count)
+post$time <- "post"
+
+tog <- rbind(pre, post)
+
+pre_mod1 <- glm(Sentiment_Score ~ Joy_Count + Anger_Count + Pos_Count + Neg_Count, data = pre)
+summary(pre_mod1)
+
+post_mod2 <- glm(Sentiment_Score ~ Joy_Count + Anger_Count + Pos_Count + Neg_Count, data = post)
+summary(post_mod2)
+
+mod3 <- glm(Sentiment_Score ~ Joy_Count + Anger_Count + Pos_Count + Neg_Count + factor(time) + Pos_Count:factor(time) + Neg_Count:factor(time), data = tog)
+summary(mod3)
+
+
+```
+
+
+### Creating DataSet with Additions
+```{r}
+write.csv(sent_cnt_pre, "pre_coronavirus.csv", row.names = FALSE)
+```
+
+
+
+
+
+
