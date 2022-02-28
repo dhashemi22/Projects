@@ -1,0 +1,132 @@
+---
+title: "What affects median house prices in California?"
+author: "Dara Hashemi, Joshua Park, Oscar Monroy, William Foote"
+date: "12/10/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+# county <- read.csv("county_data.csv")
+# county_5 <- read.csv("county_5.csv")
+race <- read.csv("county_race_clean.csv")
+gdp <- read.csv("county_gdp_dirty.csv")
+price <- read.csv("county_price_dirty.csv")
+library(corrplot)
+library(car)
+library(tidyverse)
+library(knitr)
+```
+
+# Cleaning Data
+
+```{r}
+colnames(gdp) <- c("county", 2017, 2018, 2019)
+colnames(price) <- c("county", 2017, 2018, 2019)
+
+gdp <- gdp %>% 
+  gather('2017', '2018', '2019', key = "year", value = "gdp")
+gdp$year <- as.numeric(gdp$year)
+
+price <- price %>% 
+  gather('2017', '2018', '2019', key = "year", value = "med_home_price")
+price$year <- as.numeric(price$year)
+
+county_names <- sort(price$county)
+race$county <- county_names
+
+price_race <- full_join(race, price, by = c("county", "year"))
+prg <- full_join(price_race, gdp, by = c("county", "year"))
+
+prg$gdp_cap <- prg$gdp / prg$TOT_POP
+
+dem_prop_cat <- character(58 * 3)
+dem_perc <- unlist(prg$dem_perc)
+for (i in seq_len(58 * 3)) {
+  if (dem_perc[i] <= 31.25) {
+    dem_prop_cat[i] <- "low"
+  } else if (dem_perc[i] > 31.25 & dem_perc[i] <= 42.5) {
+    dem_prop_cat[i] <- "avg"
+  } else if (dem_perc[i] > 42.5) {
+    dem_prop_cat[i] <- "high"
+  }
+}
+
+prg$dem_prop_cat <- dem_prop_cat
+prg$reg_prop_cat <- with(prg, ifelse(reg_perc > 76, "low", "high"))
+```
+
+# Plots and output
+
+```{r}
+with(prg, hist(dem_perc, col = "coral", density = 50, main = "% of Registered Democratic Voters in California
+(Split for Low, Between, High Levels)", xlab = "% Registered", ylab = "# of Counties", ylim = c(0,40)))
+abline(v = c(31.25, 42.5), lwd = 2, lty = 2)
+
+
+with(prg, hist(reg_perc, col = "turquoise3", density = 50, main = "Total Registered Voter % (Split for High and Low Levels)", xlab = "% Registered", ylab = "# of Counties", ylim = c(0,50)))
+abline(v = c(76), lwd = 2, lty = 2)
+
+pairs(prg[, c(11, 3, 4, 9)], col = "coral", pch = 18)
+res <- cor(prg[, c(11, 3, 4, 9)], use = "pairwise.complete.obs")
+
+corrplot(res, type = "upper", order = "hclust", 
+         tl.col = "black", tl.srt = 45)
+dd <- with(prg, table(dem_prop_cat, dnn = c("# of Counties Proportion of Registered Democrat Voters")))
+with(prg, table(reg_prop_cat))
+with(prg, table(dem_prop_cat, reg_prop_cat))
+
+x <- c(11, 3, 4, 9)
+names <- c("GDP per Capita", "Total Population", "Hispanic Percent", "Median Home Price")
+gray <- c(20, 35, 50, 65)
+for (i in seq_len(4)) {
+  hist(prg[[x[i]]], main = names[i], col = paste("grey", gray[i]), xlab = "")
+}
+
+hist(prg$gdp_cap, main = "GDP per Capita", col = "green", xlab = "U.S. Dollars", ylab = "# of Counties", xaxt = "n", xlim = c(10000, 250000))
+axis(1, at = seq(10000, 230000, by = 20000))
+
+hist(prg$h_perc, main = "Percent of Population Hispanic", col = "blue", xlab = "Percent Hispanic", ylab = "# of Counties", xaxt = "n")
+axis(1, at = seq(0, 100, by = 10))
+
+hist(prg$med_home_price, main = "Median Home Price", col = "yellow", xlab = "U.S. Dollars", ylab = "# of Counties", xaxt = "n", ylim = c(0,100))
+axis(1, at = seq(0, 2000000, by = 200000))
+
+pop_less_mil <- ifelse(prg$TOT_POP <= 1000000, TRUE, FALSE)
+hist(prg$TOT_POP[pop_less_mil], main = "Total Population (Counties with LESS than 1 Million People)", col = "red", xlab = "Population", ylab = "# of Counties")
+
+pop_more_mil <- ifelse(prg$TOT_POP > 1000000, TRUE, FALSE)
+hist(prg$TOT_POP[pop_more_mil], main = "Total Population (Counties with MORE than 1 Million People)", col = "red", xlab = "Population", ylab = "# of Counties")
+
+```
+
+# Tables for cat variables
+
+```{r}
+with(prg[!is.na(prg$med_home_price), ],
+     interaction.plot(dem_prop_cat, reg_prop_cat, 
+                              med_home_price,
+                      col = c("coral1", "turquoise3", "grey50"),
+                      lwd = 4, xlab = "Proportion of Registered Democratic Voters", ylab = "Mean of Home Prices in Dollars", trace.label = " Prop. of 
+    Tot. Registered
+    Voters"))
+
+
+```
+
+# Making Models and Output Summary
+
+```{r}
+m1 <- lm(med_home_price ~ TOT_POP + h_perc + gdp_cap + as.factor(dem_prop_cat) * as.factor(reg_prop_cat), data = prg)
+summary(m1)
+```
+
+# Model Assumptions and VIF
+
+```{r}
+plot(m1, col = "turquoise3", pch = 18)
+
+vif(m1)
+```
+
+
