@@ -1,0 +1,242 @@
+---
+title: "STATS 101C PROJECT"
+author: 'Dara Hashemi UID: 705097381'
+date: "November 22, 2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(corrplot)
+library(VIF)
+library(car)
+library(tidyverse)
+library(bestglm)
+library(class)
+```
+
+```{r}
+
+bball.train <- read.csv("train (1).csv")
+bball.test <- read.csv("test.csv")
+
+btrain <- bball.train[,-c(4:7)]
+
+summary(btrain)
+
+
+lm.1 <- glm(HTWins ~., data = btrain, family = binomial, singular.ok = TRUE)
+summary(lm.1)
+
+predicts <- predict(lm.1, newdata = bball.test)
+
+vif(lm.1)
+
+alias(lm.1)
+
+boxplot(btrain$VT.TS.tpa ~ btrain$HTWins)
+boxplot(btrain$VT.TS.fga ~ btrain$HTWins)
+boxplot(btrain$VT.TS.fgm ~ btrain$HTWins)
+boxplot(btrain$VT.TS.fta ~ btrain$HTWins)
+boxplot(btrain$VT.TS.oreb ~ btrain$HTWins)
+boxplot(btrain$VT.TS.dreb ~ btrain$HTWins)
+boxplot(btrain$VT.TS.pts ~ btrain$HTWins)
+
+bcor <- cor(btrain[,-3])
+corrplot(bcor)
+```
+
+
+
+```{r}
+model1 <- glm(HTWins ~ VT.TS.tpm + VT.TS.dreb + VT.TA.fgm + VT.TA.ast + VT.TA.blk + VT.TA.pts + VT.OTS.dreb + VT.OTS.ast + VT.OTS.pts + VT.OTA.fgm + VT.OTA.dreb + VT.OTA.ast + VT.OTA.blk + VT.OTA.pts + VT.S1.plmin + VT.S1.pts + VT.S2.plmin + VT.S3.plmin + VT.S4.plmin + VT.S5.plmin + VT.OS1.plmin + VT.OS1.dreb + VT.OS2.plmin + VT.OS3.plmin + VT.OS3.dreb + VT.OS4.plmin + VT.OS5.plmin + HT.TS.dreb + HT.TS.ast + HT.TS.pts + HT.TA.fgm + HT.TA.ast + HT.TA.pts + HT.OTA.fgm + HT.OTA.fta + HT.OTA.ast + HT.OTA.blk + HT.OTA.pts +  HT.S1.plmin + HT.S2.plmin + HT.S3.plmin + HT.S4.plmin + HT.OS1.plmin + HT.OS2.plmin + HT.OS3.plmin + HT.OS4.plmin, data = bball.train, family = binomial)
+
+summary(model1)
+
+```
+
+
+
+FRESH CLEAN DATA (LOGISTIC)
+```{r}
+myvars <- c("VT.TA.ast", "VT.OTA.dreb", "VT.OTA.blk", "VT.S1.plmin", "VT.S1.pts", "VT.S2.plmin", "VT.S3.plmin", "HT.TS.pts", "HT.TA.fgm", "HT.TA.ast", "HT.S1.plmin", "HT.S3.plmin", "HTWins")
+
+newtrain <- bball.train[myvars]
+
+model.2 <- glm(HTWins ~., data = newtrain, family = binomial)
+summary(model.2)
+
+cor(newtrain[,-26])
+
+corrplot.mixed(cor(newtrain[,-26]), number.cex = .5)
+
+
+vif(model.2)
+
+ggplot(newtrain,aes(predict.m2,colour=factor(HTWins)))+geom_density()
+
+predict.m2 <- model.2 %>% predict(bball.test, type = "response")
+predicted.classes.m2 <- ifelse(predict.m2 > 0.5, "Yes", "No")
+
+predict.m2
+
+summary(predict.m2)
+
+results <- data.frame(id = bball.test$id, HTWins = predicted.classes.m2)
+
+write.csv(results, file = ("test.submission.csv"), row.names = FALSE)
+
+
+
+```
+
+
+
+```{r}
+bb.for.bestglm <- within(newtrain, {
+    y    <- HTWins         # bwt into y
+    HTWins  <- NULL        # Delete bwt
+})
+
+bb.for.bestglm <- bb.for.bestglm[, c("VT.TA.ast", "VT.OTA.dreb", "VT.OTA.blk", "VT.S1.plmin", "VT.S1.pts", "VT.S2.plmin", "VT.S3.plmin", "HT.TS.pts", "HT.TA.fgm", "HT.TA.ast", "HT.S1.plmin", "HT.S2.plmin", "HT.S3.plmin", "HT.S4.plmin", "y")]
+
+res.bestglm <- bestglm(Xy = bb.for.bestglm, family = binomial, IC = "AIC", method = "exhaustive", nvmax = 16)
+
+res.bestglm$BestModels
+
+
+
+predict.regsubsets = function(object , newdata ,id ,...){
+  form=as.formula(object$call [[2]])
+  mat=model.matrix(form ,newdata )
+  coefi=coef(object ,id=id)
+  xvars=names(coefi)
+  mat[,xvars]%*%coefi
+}
+
+
+regfit.full = regsubsets(HTWins ~., data = newtrain, nvmax = 16)
+(reg.summary = summary(regfit.full))
+
+which.min(reg.summary$bic)
+```
+
+
+
+
+
+
+
+
+
+
+
+```{r}
+ctest.1 <- c("VT.TS.tpm", "VT.TS.dreb", "VT.TA.fgm", "VT.TA.ast", "VT.TA.blk", "VT.TA.pts", "VT.OTS.dreb", "VT.OTS.ast", "VT.OTS.pts")
+
+ctestdat.1 <- bball.train[ctest.1]
+corrplot.mixed(cor(ctestdat.1), number.cex = .7)
+
+
+ctest2 <- c("VT.S1.plmin","VT.S1.pts", "VT.S2.plmin", "VT.S3.plmin", "VT.S4.plmin", "VT.S5.plmin","HT.S1.plmin", "HT.S2.plmin", "HT.S3.plmin", "HT.S4.plmin", "HT.S5.plmin")
+
+ctestdat2 <- bball.train[ctest2]
+corrplot.mixed(cor(ctestdat2), number.cex = .7)
+
+library(pls)
+
+X=data.frame(Birdie.c, Putting.c)
+out.pc =princomp(X, cor=TRUE)
+summary(out.pc)
+#helps us see importance of each component
+plot(out.pc)
+
+# Example PCR 
+set.seed(...)
+pcr.fit <- pcr(crim~., data = btrain, scale = TRUE, validation = "CV")
+summary(pcr.fit)
+validationplot(pcr.fit, val.type = "MSEP")
+
+
+```
+
+
+```{r}
+
+set.seed(123)
+i=1:dim(btrain)[1]
+i.train=sample(i,7140, replace=F)
+stand <- scale(btrain[,-3])
+bn.train=stand[i.train,]
+bn.test=stand[-i.train,]
+counterfeit.train=btrain$HTWins[i.train]
+counterfeit.test=btrain$HTWins[-i.train]
+
+avg.error <- c()
+for (k in 1:20){
+ predictions <- knn(bn.train, bn.test, counterfeit.train, k)
+ avg.error[k] <- mean(predictions!=counterfeit.test)
+}
+plot(1:100,avg.error)
+
+# Lowest error rate
+mean(knn(X.standard.train, X.standard.test, Y.train, 1-20)!=Y.test)
+
+
+
+
+
+```
+
+
+
+
+
+## VT.TS.tpm
+         dreb
+      .TA.fgm
+         .ast
+         .blk
+         .pts
+    .OTS.dreb
+         .ast
+         .pts
+     .OTA.fgm
+         .dreb
+         .ast
+         .blk
+         .pts
+     .S1.plmin
+        .pts
+     .S2.plmin
+     .S3.plmin
+     .S4.plmin
+     .S5.plmin
+     .OS1.plmin
+          .dreb
+      .OS2.plmin
+      .OS3.plmin
+      .OS3.dreb
+      .OS4.plmin
+      .OS5.plmin
+  HT.TS.dreb
+        .ast
+        .pts
+    .TA.fgm
+        .ast
+        .pts
+    .OTA.fgm
+        .fta
+        .ast
+        .blk
+        .pts
+    .S1.plmin
+    .S2.plmin
+    .S3.plmin
+    .S4.plmin
+    .S5.plmin
+    .OS1.plmin
+    .OS2.plmin
+    .OS3.plmin
+    .OS4.plmin
+    
