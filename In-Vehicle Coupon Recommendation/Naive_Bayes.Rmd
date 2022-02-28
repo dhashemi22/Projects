@@ -1,0 +1,95 @@
+---
+title: "DSCI 550 Project Code"
+author: 'Dara Hashemi, Chrystalla Havadjia, Maria Barrera Valdez'
+date: "12/8/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+### Chi-Squared Test of Independence ###
+
+```{r}
+dat <- read.csv("data_in-vehicle-coupon-recommendation.csv")
+new_dat <- dat[dat$coupon == "Restaurant(<20)",]
+
+summary(new_dat)
+
+chisq.test(new_dat$Y, new_dat$destination)
+chisq.test(new_dat$passanger, as.factor(new_dat$Y))
+chisq.test(new_dat$weather, new_dat$Y)
+chisq.test(new_dat$time, new_dat$Y)
+chisq.test(new_dat$age, new_dat$Y)
+chisq.test(new_dat$maritalStatus, new_dat$Y)
+chisq.test(new_dat$occupation, new_dat$Y)
+chisq.test(new_dat$income, new_dat$Y)
+chisq.test(new_dat$RestaurantLessThan20, new_dat$Y)
+```
+
+
+```{r}
+library(caret)
+library(e1071)
+
+
+# Split Data into Testing and Training
+set.seed(123)
+i=1:dim(new_dat)[1]
+i_train=sample(i,2000, replace=F)
+bn_train=new_dat[i_train,]
+bn_test=new_dat[-i_train,]
+n_train=new_dat[i_train,]$Y
+n_test=new_dat[-i_train,]$Y
+
+# Model for Variable Importance
+m1 <- train(as.factor(Y)~., data = bn_train, method = 'naive_bayes')
+varImp(m1)
+
+# Naive Bayes Model on Training Data
+nbm1 <- naiveBayes(as.factor(Y) ~ passanger + weather + destination + time + expiration + as.factor(toCoupon_GEQ25min), data = bn_train)
+
+
+# Prediction on Training Data
+p <- predict(nbm1, bn_train)
+tt <- table(p, bn_train$Y)
+tt
+
+
+# Prediction on Testing Data
+p1 <- predict(nbm1, bn_test)
+tt2 <- table(p1, bn_test$Y)
+tt2
+
+acc_train = 1 - sum(diag(tt)) / sum(tt)
+acc_test = 1 - sum(diag(tt2)) / sum(tt2)
+
+train_recall = 1296/(1296+342)
+train_prec = 1296/(1296+119)
+train_f1 = 2 * (train_prec * train_recall) / (train_prec + train_recall)
+
+# Accuracy Training Data
+1 - acc_train
+
+# F-1 Score Training Data
+train_f1
+```
+
+
+```{r}
+prec = 507/(507+48)
+recall = 507/(507+141)
+test_f1 = 2 * (prec * recall) / (prec + recall)
+
+# Accuracy Testing Data
+1 - acc_test
+
+# F-1 Score Testing Data
+test_f1
+```
+
+
+
+
+
